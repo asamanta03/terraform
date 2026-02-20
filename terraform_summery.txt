@@ -87,4 +87,36 @@ Consistency - same result every time
 Free of cost automation
 Reduces human error (40% chance of manual mistakes)
 Version control capability
+
 Code reusability
+==========================================================================
+
+Based on the meeting transcript, here are the Q&A details from Syed's interview:
+
+Interview Details:
+
+Company: Capgemini
+Position: Senior Cloud Engineer (Mobile Innovation)
+Duration: 20-25 minutes
+Experience Required: 3 years of cloud engineering
+Questions Asked:
+
+VPC and Networking: How to connect VMs, questions about VPC, subnets, and private subnets
+
+Terraform Functions: What are the functions of Terraform? (Syed mentioned he wasn't able to answer this one properly)
+
+AWS Connect: Questions about AWS Connect service
+
+Configuration using Terraform: How to configure using Terraform
+
+Kubernetes: Questions related to Kubernetes
+
+Syed's Feedback:
+
+He felt the interview went moderately well - gave about 70% of answers
+All questions were relevant to what was taught in the class
+The architecture PDFs shared in class were very helpful for recalling concepts
+He mentioned needing more revision, particularly of the notes shared in the groups
+He got the interview call through Naukri after optimizing his profile based on tips shared in the class
+His background was non-technical (worked in service desk at TCS in SMS project)
+Syed is currently waiting for the second round of interview.
