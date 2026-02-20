@@ -1,0 +1,90 @@
+terraform day : 1
+Based on the meeting transcript, here are the scenario-based questions and answers that were discussed today:
+
+Scenario 1: Manual vs Automation Approach
+Q: If a deployment takes 5-6 hours manually with potential for errors, what approach should be used?
+A: Use Infrastructure as Code (IaC) with Terraform to reduce deployment time to 5-10 minutes without manual intervention, increasing productivity and reducing errors.
+
+Scenario 2: Human Dependency Problem
+Q: If Lingraj (experienced person) takes leave or leaves the company, and replacement person takes 10-15 hours instead of 5 hours, what's the solution?
+A: Implement Terraform code so that the infrastructure creation is codified and doesn't depend on individual knowledge. Anyone can execute the same code with consistent results.
+
+Scenario 3: Terraform vs Ansible Usage
+Q: When should you use Terraform vs Ansible?
+A: Use Terraform for infrastructure creation (EC2, S3, RDS, VPC). Use Ansible for configuration management, software installation, updates, user management, and day-to-day operational activities. Terraform creates the building, Ansible does the interior work.
+
+Scenario 4: Modification in Production
+Q: If you need to expand existing production cluster or modify infrastructure, will Terraform destroy everything?
+A: For one-time scaling activities, manual changes can be done. For repeated activities, use automation. Data is stored in images/volumes, not in the instance itself, so it can be preserved.
+
+Scenario 5: Multi-Cloud Environment
+Q: Which tool to choose for different cloud scenarios?
+A: For AWS/GCP/Azure/Hybrid/Multi-cloud - use Terraform (supports 5000+ providers). For AWS only with paid support - CloudFormation. For only software installation/operations - Ansible.
+=================================
+Based on the meeting transcript, here is a summary of the session:
+
+The session was focused on introducing Infrastructure as Code (IAC) tools, specifically Terraform and Ansible. The instructor (Vikas) explained:
+
+Key Concepts Covered:
+
+Difference between Terraform and Ansible: Terraform is used for infrastructure creation/provisioning (like EC2, S3, RDS), while Ansible is for configuration management and day-to-day operations
+IAC benefits: Speed, consistency, reduced human error, reusability, version control
+Terraform supports 5000+ cloud providers and uses HCL (HashiCorp Configuration Language)
+Terraform is preferred for multi-cloud environments; CloudFormation is AWS-specific
+Practical Activities Completed:
+
+Installed Terraform binary on Windows machines
+Installed AWS CLI
+Created AWS IAM user with programmatic access
+Generated access keys and secret keys
+Configured AWS credentials using "aws configure" command
+Downloaded Terraform code from Git repository
+Successfully created EC2 instances using Terraform commands (terraform init, terraform plan, terraform apply)
+Created IAM users using Terraform automation
+Terraform Workflow Demonstrated:
+
+terraform init (initialization)
+terraform plan (planning)
+terraform apply (execution)
+terraform destroy (deletion)
+Students were given a weekend homework assignment to practice creating infrastructure using Terraform and troubleshoot any errors encountered. The session emphasized that Terraform significantly reduces deployment time from hours to minutes through automation.
+=================================================
+Based on the meeting transcript, here are the interview questions and answers that were discussed:
+
+1. What is Terraform?
+
+Terraform is an IAC (Infrastructure as Code) tool
+Created by HashiCorp company
+Helps to create, manage, and automate cloud infrastructure with the help of code
+Uses its own language called HCL (HashiCorp Configuration Language)
+Supports multi-cloud platforms
+2. What is Ansible?
+
+Open source configuration management tool
+Developed by Red Hat
+Uses YAML language
+Used to configure servers and deploy applications
+Used for day-to-day operations, patching work, software updates, user management
+3. Difference between Terraform and Ansible?
+
+Terraform is primarily for infrastructure creation/provisioning (EC2, S3, RDS, VPC creation)
+Ansible is for configuration management and automation of repetitive operational activities
+Terraform creates the infrastructure first, then Ansible performs operations on it
+Terraform uses HCL language, Ansible uses YAML
+4. How many providers does Terraform support?
+
+5,000+ providers (certification question)
+Currently 6,092 different providers including AWS, Azure, GCP, Kubernetes, Oracle, Alibaba, etc.
+5. What is HCL?
+
+HashiCorp Configuration Language
+Human-friendly as well as machine-friendly language
+Created specifically for Terraform to avoid complexity of other languages like JSON, Python
+6. Benefits of Infrastructure as Code (IAC)?
+
+Speed - reduces deployment time from hours to minutes
+Consistency - same result every time
+Free of cost automation
+Reduces human error (40% chance of manual mistakes)
+Version control capability
+Code reusability
