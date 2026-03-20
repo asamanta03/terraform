@@ -1,0 +1,8 @@
+Describe a real Terraform project you worked on
+
+Sample Answer:
+
+I used Terraform to provision AWS infrastructure including VPC, EC2, S3, and IAM roles.
+I implemented remote backend using S3 and DynamoDB for state locking.
+I created reusable modules and integrated with Jenkins CI/CD pipeline.
+This reduced manual effort by 70% and improved deployment consistency.
