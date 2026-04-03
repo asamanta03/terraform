@@ -6,3 +6,961 @@ I used Terraform to provision AWS infrastructure including VPC, EC2, S3, and IAM
 I implemented remote backend using S3 and DynamoDB for state locking.
 I created reusable modules and integrated with Jenkins CI/CD pipeline.
 This reduced manual effort by 70% and improved deployment consistency.
+=============================================================
+Project:
+“I designed a 3-tier architecture using Terraform with a custom VPC across multiple AZs.
+The web tier uses an ALB and Auto Scaling Group in public subnets.
+The app tier runs EC2 instances in private subnets with restricted access.
+The database tier uses RDS with Multi-AZ for high availability.
+Security groups enforce strict communication between layers.
+Terraform remote backend with S3 and DynamoDB ensures safe state management, and the deployment is automated using CI/CD pipelines.”
+=============================================
+check logs using TF_LOG=DEBUG
+
+Agent      Type	                 Use Case
+any	       Simple                pipelines
+label	   Specific             node/tools
+none	   Stage-level         control
+docker	   Containerized       builds
+kubernetes Cloud-native        CI/CD
+==================================
+🔥 1. State File Conflict (Team Collaboration)
+❓ Scenario:
+
+Multiple team members are running terraform apply and state is getting corrupted.
+
+✅ Answer:
+
+This happens due to no state locking.
+
+👉 Solution:
+
+Use remote backend like:
+AWS S3 + DynamoDB (for locking)
+Example:
+terraform {
+  backend "s3" {
+    bucket         = "my-terraform-state"
+    key            = "project/terraform.tfstate"
+    region         = "ap-south-1"
+    dynamodb_table = "terraform-lock"
+  }
+}
+
+👉 Explanation:
+
+S3 → stores state file
+DynamoDB → provides locking mechanism
+🔥 2. Resource Drift (Manual Changes in AWS)
+❓ Scenario:
+
+Someone manually changed an EC2 instance in AWS console.
+
+✅ Answer:
+
+Terraform detects this via:
+
+terraform plan
+
+👉 Fix options:
+
+Revert infra to Terraform state
+
+terraform apply
+
+Accept manual changes
+
+terraform refresh
+
+👉 Best Practice:
+
+Avoid manual changes (use IAM restrictions)
+🔥 3. Need to Reuse Code (Multi-Environment Setup)
+❓ Scenario:
+
+You need same infra for dev, staging, prod
+
+✅ Answer:
+
+Use:
+
+Modules
+Workspaces
+
+👉 Example:
+
+terraform workspace new dev
+terraform workspace new prod
+
+👉 Or better:
+
+Use modules:
+module "vpc" {
+  source = "./modules/vpc"
+  env    = "dev"
+}
+🔥 4. Secret Management
+❓ Scenario:
+
+You need to pass DB password securely.
+
+✅ Answer:
+
+Never hardcode secrets ❌
+
+👉 Use:
+
+Environment variables:
+export TF_VAR_db_password="mypassword"
+Or AWS Secrets Manager
+
+👉 Terraform:
+
+variable "db_password" {
+  sensitive = true
+}
+🔥 5. Infrastructure Destroy Accident Prevention
+❓ Scenario:
+
+Someone accidentally runs terraform destroy
+
+✅ Answer:
+
+Use:
+
+lifecycle {
+  prevent_destroy = true
+}
+
+👉 Also:
+
+Use IAM policies to restrict destroy
+Use separate accounts for prod
+🔥 6. Partial Failure During Apply
+❓ Scenario:
+
+Terraform fails after creating some resources.
+
+✅ Answer:
+Terraform keeps track in state
+Next run:
+terraform apply
+
+→ Only remaining resources will be created
+
+👉 If broken:
+
+terraform taint <resource>
+🔥 7. Dependency Handling
+❓ Scenario:
+
+An EC2 instance depends on a security group.
+
+✅ Answer:
+
+Terraform handles this automatically via references:
+
+resource "aws_instance" "app" {
+  vpc_security_group_ids = [aws_security_group.sg.id]
+}
+
+👉 If needed:
+
+depends_on = [aws_security_group.sg]
+🔥 8. Large Infrastructure Performance Issue
+❓ Scenario:
+
+Terraform apply is very slow.
+
+✅ Answer:
+Use:
+terraform apply -parallelism=20
+
+👉 Also:
+
+Split infra into modules
+Use targeted apply:
+terraform apply -target=aws_instance.app
+🔥 9. Multi-Cloud Deployment
+❓ Scenario:
+
+Deploy infra in AWS + Azure.
+
+✅ Answer:
+
+Use multiple providers:
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+provider "azurerm" {
+  features {}
+}
+🔥 10. CI/CD Integration (Real Interview Favorite)
+❓ Scenario:
+
+How do you automate Terraform in Jenkins?
+
+✅ Answer:
+
+Pipeline example:
+
+pipeline {
+  agent any
+
+  stages {
+    stage('Init') {
+      steps {
+        sh 'terraform init'
+      }
+    }
+    stage('Plan') {
+      steps {
+        sh 'terraform plan'
+      }
+    }
+    stage('Apply') {
+      steps {
+        input 'Approve?'
+        sh 'terraform apply -auto-approve'
+      }
+    }
+  }
+}
+
+👉 Best Practice:
+
+Store state remotely
+Use service accounts
+Add approval step
+🔥 11. Rollback Strategy
+❓ Scenario:
+
+Deployment broke production.
+
+✅ Answer:
+
+Terraform doesn’t have direct rollback.
+
+👉 Options:
+
+Use previous state file
+Version control (Git revert)
+Re-run apply with old config
+🔥 12. Import Existing Infrastructure
+❓ Scenario:
+
+Resources already exist in AWS, now you want Terraform to manage them.
+
+✅ Answer:
+terraform import aws_instance.myec2 i-123456
+
+👉 Then define resource in .tf file.
+
+🔥 13. Dynamic Resource Creation
+❓ Scenario:
+
+Create multiple EC2 instances dynamically.
+
+✅ Answer:
+resource "aws_instance" "app" {
+  count = 3
+  ami   = "ami-123"
+}
+
+👉 Or:
+
+for_each = toset(["dev", "prod"])
+🔥 14. Handling Different Config per Environment
+❓ Scenario:
+
+Prod needs bigger instance than dev.
+
+✅ Answer:
+
+Use variables:
+
+variable "instance_type" {}
+
+# tfvars
+instance_type = "t3.micro"
+🔥 15. Debugging Terraform Issues
+❓ Scenario:
+
+Terraform is failing but no clear logs.
+
+✅ Answer:
+
+Enable debug logs:
+
+export TF_LOG=DEBUG
+
+It sets an environment variable TF_LOG to DEBUG
+
+This tells Terraform:
+
+“Show me detailed internal logs while running commands like plan or apply”
+🎯 Pro Tips (Interview Gold)
+Always mention:
+Remote backend
+State locking
+Modules
+Security (secrets)
+CI/CD integration
+===============================================================================================================
+🔥 Q1: How does Terraform internally handle dependencies?
+✅ Strong Answer:
+Terraform builds a dependency graph (DAG)
+Based on:
+resource references
+implicit + explicit (depends_on)
+Executes in parallel wherever possible
+
+👉 Bonus line:
+
+“Terraform ensures correct order without manual sequencing.”
+
+🔥 Q2: What happens if Terraform state is deleted?
+✅ Answer:
+Terraform loses track of resources
+Next apply may try to recreate everything ❌
+
+👉 Recovery:
+
+Restore from backup (S3 versioning)
+Import resources again
+🔥 Q3: Difference between count and for_each?
+✅ Answer:
+count	for_each
+Index-based	Key-based
+Less flexible	More flexible
+
+👉 Example:
+
+for_each = toset(["dev","prod"])
+
+👉 Pro line:
+
+“for_each is preferred for stable resource identity.”
+
+🔥 Q4: How do you manage secrets in Terraform?
+✅ Answer:
+Never hardcode ❌
+Use:
+Environment variables
+AWS Secrets Manager
+Vault
+sensitive = true
+🔥 Q5: Terraform vs CloudFormation?
+✅ Answer:
+Terraform	CloudFormation
+Multi-cloud	AWS only
+HCL language	JSON/YAML
+Faster adoption	Native AWS
+
+👉 Smart line:
+
+“Terraform is preferred in hybrid/multi-cloud environments.”
+
+🔥 Q6: What is State Locking?
+✅ Answer:
+Prevents concurrent changes
+Achieved via DynamoDB in S3 backend
+🔥 Q7: How do you handle partial failure?
+✅ Answer:
+Terraform updates state incrementally
+Re-run apply resumes from failure point
+🔥 Q8: What is taint and when to use it?
+✅ Answer:
+terraform taint aws_instance.myec2
+
+👉 Forces recreation
+
+👉 Use case:
+
+Corrupted resource
+🔥 Q9: How do you design Terraform for large projects?
+✅ Answer:
+Use modules
+Separate state files
+Environment isolation
+CI/CD integration
+🔥 Q10: How do you prevent accidental deletion in production?
+✅ Answer:
+lifecycle {
+  prevent_destroy = true
+}
+🔥 Q11: Explain Terraform workflow (deep)
+✅ Answer:
+init → डाउनलोड providers
+plan → execution plan
+apply → create infra
+destroy → remove infra
+
+👉 Bonus:
+
+State file tracks everything
+🔥 Q12: How do you scale Terraform in enterprise?
+✅ Answer:
+Remote backend
+Module registry
+CI/CD pipelines
+Policy as Code (Sentinel)
+
+===============================================================================================================
+🔥 Q1: Real Scenario (Very Common in TCS)
+❓
+
+You deployed infrastructure using Terraform. Suddenly, deployment fails halfway. Some resources are created, some are not. What will you do?
+
+✅ Expected Answer:
+Terraform maintains state file
+Already created resources are tracked
+Re-run:
+terraform apply
+
+👉 Only remaining resources will be created
+
+👉 If issue persists:
+
+terraform taint <resource>
+
+👉 Pro Answer Add-on:
+
+“I would also check logs using TF_LOG=DEBUG and validate IAM permissions.”
+
+🔥 Q2: Networking Scenario
+❓
+
+Design a secure architecture where:
+
+Web server is public
+App + DB are private
+✅ Answer:
+Use VPC with public/private subnets
+Internet Gateway → public subnet
+NAT Gateway → private subnet
+Security groups:
+Web: allow HTTP from internet
+App: allow only from Web
+DB: allow only from App
+🔥 Q3: Basic Terraform Coding
+❓
+
+Write Terraform code to create an EC2 instance.
+
+✅ Answer:
+resource "aws_instance" "example" {
+  ami           = "ami-123456"
+  instance_type = "t2.micro"
+}
+
+👉 Follow-up:
+
+Add key pair
+Add security group
+🔥 Q4: State File Question
+❓
+
+Where is Terraform state stored by default?
+
+✅ Answer:
+Locally (terraform.tfstate)
+Not safe for teams
+
+👉 Best practice:
+
+Use S3 + DynamoDB
+🔥 Q5: DevOps Integration
+❓
+
+How do you integrate Terraform with Jenkins?
+
+✅ Answer:
+Pipeline stages:
+init
+plan
+approval
+apply
+🏢 2. Infosys Interview Question Set (Concept + Design Heavy)
+🔥 Q1: Module Design (Very Common)
+❓
+
+How do you structure Terraform code for large projects?
+
+✅ Answer:
+modules/
+  vpc/
+  ec2/
+  rds/
+envs/
+  dev/
+  prod/
+
+👉 Use:
+
+module "vpc" {
+  source = "../../modules/vpc"
+}
+🔥 Q2: count vs for_each (Almost Guaranteed)
+❓
+
+Difference?
+
+✅ Answer:
+count → index-based
+for_each → key-based
+
+👉 Best line:
+
+“for_each is preferred for predictable resource tracking.”
+
+🔥 Q3: Drift Detection
+❓
+
+How Terraform detects manual changes?
+
+✅ Answer:
+terraform plan
+🔥 Q4: Secrets Handling
+❓
+
+How do you store DB passwords?
+
+✅ Answer:
+AWS Secrets Manager
+Environment variables
+sensitive = true
+🔥 Q5: Real Scenario
+❓
+
+You accidentally deleted Terraform state file. What happens?
+
+✅ Answer:
+Terraform loses tracking
+May recreate infra
+
+👉 Recovery:
+
+Restore from S3 versioning
+Import resources
+🏢 3. Cognizant Interview Question Set (Real-World + Troubleshooting)
+🔥 Q1: Production Issue
+❓
+
+Your Terraform deployment broke production. What will you do?
+
+✅ Answer:
+Stop pipeline immediately
+Rollback via:
+Git revert
+Previous state file
+
+👉 Important:
+
+“Terraform doesn’t support direct rollback.”
+
+🔥 Q2: High Availability Design
+❓
+
+How do you make infra highly available?
+
+✅ Answer:
+Multi-AZ deployment
+Auto Scaling Group
+Load Balancer
+RDS Multi-AZ
+🔥 Q3: Import Existing Resources
+❓
+
+Infra already exists, how to manage via Terraform?
+
+✅ Answer:
+terraform import aws_instance.myec2 i-123
+🔥 Q4: Performance Issue
+❓
+
+Terraform apply is slow. Fix?
+
+✅ Answer:
+terraform apply -parallelism=20
+
+👉 Also:
+
+Split modules
+Optimize dependencies
+🔥 Q5: Security Question (Very Important)
+❓
+
+How do you secure Terraform code?
+
+✅ Answer:
+No hardcoded secrets
+Use IAM roles
+Encrypt state (S3 SSE)
+Restrict access
+🧠 PANEL GRILLING (COMMON ACROSS ALL 3)
+🔥 Q: Explain complete Terraform lifecycle in real project
+✅ Strong Answer:
+Write .tf files
+terraform init → download providers
+terraform plan → preview changes
+terraform apply → create infra
+State stored remotely
+🔥 Q: What is biggest challenge you faced?
+✅ Sample Answer:
+
+“State conflict in team environment. Solved using S3 backend with DynamoDB locking.”
+
+🔥 Q: Why Terraform over other tools?
+✅ Answer:
+Multi-cloud support
+Reusable modules
+Strong community
+=================================================================================================================
+🚨 1. ALB is UP but Website is DOWN
+❓ Scenario:
+ALB DNS is reachable
+But application returns 503 / timeout
+🔍 Diagnosis Approach (Say this step-by-step)
+
+👉 Step 1: Check Target Group
+
+Are targets healthy/unhealthy?
+
+👉 Step 2: Health Check issue?
+
+Wrong path (/health vs /)
+Port mismatch
+
+👉 Step 3: Security Groups
+
+ALB → EC2 allowed?
+
+👉 Step 4: App not running
+
+SSH into instance (via Bastion)
+✅ Fix:
+Correct health check path
+Open SG rules:
+ingress {
+  from_port = 80
+  security_groups = [aws_lb.alb.id]
+}
+🎯 Interview Line:
+
+“I start from entry point (ALB) and trace downstream dependencies.”
+
+🚨 2. Terraform Apply Stuck / Hanging
+❓ Scenario:
+
+terraform apply runs forever
+
+🔍 Root Causes:
+Waiting for resource (ALB, RDS provisioning)
+Dependency cycle
+Network issue
+✅ Troubleshooting:
+export TF_LOG=DEBUG
+
+👉 Check:
+
+AWS console → resource status
+Dependency loops
+🎯 Fix:
+Break circular dependency
+Use depends_on correctly
+🚨 3. EC2 Created but Not Accessible
+❓ Scenario:
+
+Instance created but:
+
+SSH fails
+App not reachable
+🔍 Diagnosis:
+
+👉 Check:
+
+Security Group:
+Port 22 open?
+Key pair correct?
+Public IP assigned?
+
+👉 Check subnet:
+
+Public subnet needs IGW
+✅ Fix:
+associate_public_ip_address = true
+🎯 Pro Answer:
+
+“Most issues are networking misconfigurations, not compute.”
+
+🚨 4. RDS Connection Failure from App
+❓ Scenario:
+
+App cannot connect to DB
+
+🔍 Check:
+DB in private subnet? ✅ (good)
+Security group:
+DB allows port 3306 from App SG?
+✅ Fix:
+ingress {
+  from_port = 3306
+  security_groups = [aws_security_group.app.id]
+}
+🎯 Interview Line:
+
+“DB should never be publicly exposed; only allow app-layer access.”
+
+🚨 5. Terraform State Lock Error
+❓ Scenario:
+Error acquiring the state lock
+🔍 Cause:
+Another user running apply
+Lock not released
+✅ Fix:
+terraform force-unlock <lock-id>
+🎯 Best Practice:
+Use S3 + DynamoDB backend
+🚨 6. Infra Drift (Manual AWS Changes)
+❓ Scenario:
+
+Someone changed infra from console
+
+🔍 Detect:
+terraform plan
+✅ Fix Options:
+Revert:
+terraform apply
+Accept:
+terraform refresh
+🚨 7. Auto Scaling Not Working
+❓ Scenario:
+
+Traffic increases but instances not scaling
+
+🔍 Check:
+CloudWatch alarms configured?
+CPU threshold correct?
+ASG attached?
+✅ Fix:
+Configure scaling policy properly
+🎯 Interview Tip:
+
+“Scaling depends on metrics, not just ASG definition.”
+
+🚨 8. Deployment Broke Production
+❓ Scenario:
+
+New Terraform change caused outage
+
+🔍 Immediate Actions:
+Stop pipeline 🚫
+Identify change via Git
+✅ Recovery:
+Revert code
+Apply previous version
+🎯 Important:
+
+“Terraform has no native rollback; version control is critical.”
+
+🚨 9. NAT Gateway Issue (Private Instances No Internet)
+❓ Scenario:
+
+Private EC2 cannot access internet
+
+🔍 Check:
+NAT Gateway exists?
+Route table:
+0.0.0.0/0 → NAT
+✅ Fix:
+Attach NAT to correct subnet
+Update route table
+🚨 10. Terraform Destroy Deleted Critical Resource
+❓ Scenario:
+
+Production DB deleted accidentally
+
+✅ Prevention:
+lifecycle {
+  prevent_destroy = true
+}
+🎯 Recovery:
+Restore from backup / snapshot
+🧠 MASTER TROUBLESHOOTING FRAMEWORK (Say this in interview)
+
+👉 Always follow:
+
+1. Identify entry point
+ALB / EC2 / API
+2. Trace flow
+User → ALB → Web → App → DB
+3. Check:
+Networking (SG, NACL, routes)
+Application logs
+Terraform state
+💡 REAL INTERVIEW GOLD LINE
+
+“In production outages, I follow a layered debugging approach—starting from the entry point and validating each downstream dependency, while correlating Terraform state with actual AWS resources.”
+
+===================================================================================================================
+🏗️ Scenario: 3-Tier Web Application on AWS using Terraform
+❓ Interview Question
+
+“Design and implement a highly available 3-tier architecture in AWS using Terraform.”
+
+✅ ✅ High-Level Architecture
+🌐 Components:
+Presentation Layer (Web Tier)
+ALB (Application Load Balancer)
+EC2 (Auto Scaling Group)
+Application Layer (App Tier)
+Private EC2 instances
+Database Layer (DB Tier)
+RDS (MySQL/PostgreSQL)
+📊 Architecture Diagram (Textual)
+Internet
+   ↓
+ALB (Public Subnet)
+   ↓
+Web Tier EC2 (Public Subnet / ASG)
+   ↓
+App Tier EC2 (Private Subnet)
+   ↓
+RDS (Private Subnet)
+🔐 Networking (VPC Design)
+📌 You explain like this in interview:
+Create a VPC
+2 AZs for High Availability
+Subnets:
+Public Subnets → ALB + Bastion
+Private Subnets → App + DB
+Terraform Example (VPC)
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+Subnets
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+}
+⚖️ Load Balancer (Web Tier Entry)
+resource "aws_lb" "alb" {
+  name               = "app-alb"
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public.id]
+}
+
+👉 Explain:
+
+Routes traffic to Web Tier
+Health checks enabled
+🚀 Web Tier (Auto Scaling Group)
+resource "aws_launch_template" "web" {
+  image_id      = "ami-123"
+  instance_type = "t2.micro"
+}
+resource "aws_autoscaling_group" "web_asg" {
+  desired_capacity = 2
+  max_size         = 4
+  min_size         = 2
+}
+
+👉 Explain:
+
+Auto scaling ensures availability
+Deployed in multiple AZs
+🔒 App Tier (Private EC2)
+resource "aws_instance" "app" {
+  ami           = "ami-123"
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.private.id
+}
+
+👉 Explain:
+
+No public IP
+Only accessible from Web Tier
+🛢️ Database Tier (RDS)
+resource "aws_db_instance" "db" {
+  engine         = "mysql"
+  instance_class = "db.t3.micro"
+  allocated_storage = 20
+  username       = "admin"
+  password       = var.db_password
+}
+
+👉 Explain:
+
+Deployed in private subnet
+Multi-AZ enabled (important!)
+🔐 Security Groups (VERY IMPORTANT)
+Web SG:
+Allow HTTP from Internet
+App SG:
+Allow traffic only from Web SG
+DB SG:
+Allow only from App SG
+ingress {
+  from_port   = 3306
+  to_port     = 3306
+  security_groups = [aws_security_group.app.id]
+}
+🔑 Bastion Host (Optional but interview favorite)
+
+👉 Used to SSH into private instances
+
+💾 Remote Backend (MUST MENTION)
+terraform {
+  backend "s3" {
+    bucket         = "tf-state-bucket"
+    key            = "3tier/terraform.tfstate"
+    region         = "ap-south-1"
+    dynamodb_table = "tf-lock"
+  }
+}
+🔄 CI/CD Integration (Real-world)
+
+👉 You say:
+
+Code stored in Git
+Pipeline (Jenkins/GitHub Actions):
+terraform init
+terraform plan
+manual approval
+terraform apply
+🚨 Advanced Interview Follow-up Questions
+❓ How do you make it highly available?
+
+✅ Answer:
+
+Multi-AZ deployment
+ALB + ASG
+RDS Multi-AZ
+❓ How do you secure secrets?
+
+✅ Answer:
+
+AWS Secrets Manager
+Terraform sensitive variables
+❓ What if DB fails?
+
+✅ Answer:
+
+Multi-AZ failover
+Read replicas (optional)
+❓ How do you scale?
+
+✅ Answer:
+
+ASG for EC2
+RDS vertical scaling / read replicas
+❓ How do you reduce cost?
+
+✅ Answer:
+
+Use t3 instances
+Auto scaling
+Turn off dev environments
