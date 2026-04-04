@@ -16,6 +16,19 @@ Security groups enforce strict communication between layers.
 Terraform remote backend with S3 and DynamoDB ensures safe state management, and the deployment is automated using CI/CD pipelines.”
 =============================================
 check logs using TF_LOG=DEBUG
+===============================================
+Terraform apply is very slow.
+
+✅ Answer:
+Use:
+terraform apply -parallelism=20
+
+👉 Also:
+
+Split infra into modules
+Use targeted apply:
+terraform apply -target=aws_instance.app
+============================================
 
 Agent      Type	                 Use Case
 any	       Simple                pipelines
