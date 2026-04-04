@@ -37,14 +37,13 @@ Split infra into modules
 Use targeted apply:
 terraform apply -target=aws_instance.app
 ============================================
+🔥 Q10: How do you prevent accidental deletion in production?
+✅ Answer:
+lifecycle {
+  prevent_destroy = true
+}
+============================================
 
-Agent      Type	                 Use Case
-any	       Simple                pipelines
-label	   Specific             node/tools
-none	   Stage-level         control
-docker	   Containerized       builds
-kubernetes Cloud-native        CI/CD
-==================================
 🔥 1. State File Conflict (Team Collaboration)
 ❓ Scenario:
 
