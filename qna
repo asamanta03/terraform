@@ -15,7 +15,15 @@ The database tier uses RDS with Multi-AZ for high availability.
 Security groups enforce strict communication between layers.
 Terraform remote backend with S3 and DynamoDB ensures safe state management, and the deployment is automated using CI/CD pipelines.”
 =============================================
-check logs using TF_LOG=DEBUG
+Enable debug logs:
+
+export TF_LOG=DEBUG
+
+It sets an environment variable TF_LOG to DEBUG
+
+This tells Terraform:
+
+“Show me detailed internal logs while running commands like plan or apply”
 ===============================================
 Terraform apply is very slow.
 
